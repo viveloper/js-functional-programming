@@ -259,5 +259,127 @@ console.log(
 console.log(
   _reduce([1, 2, 3], (memo, val) => {
     return memo + val;
-  }, 10)
+  }, 4)
 )
+
+// 파이프라인 만들기
+// 1. _pipe
+var _pipe = function () {
+  var fns = arguments;
+  return function (arg) {
+    return _reduce(fns, (arg, fn) => {
+      return fn(arg);
+    }, arg);
+  }
+}
+
+var f1 = _pipe(
+  a => a + 1,
+  a => a * 2,
+  a => a * a
+);
+
+console.log(
+  f1(1)
+)
+
+// 2. _go
+var _go = function (arg) {
+  var fns = _rest(arguments, 1);
+  return _pipe.apply(null, fns)(arg);
+}
+
+_go(
+  1,
+  a => a + 1,
+  a => a * 2,
+  a => a * a,
+  console.log
+);
+
+_go(
+  users,
+  users => _filter(users, user => user.age >= 30),
+  users => _map(users, user => user.name),
+  console.log
+);
+
+_go(
+  users,
+  users => _filter(users, user => user.age < 30),
+  users => _map(users, user => user.age),
+  console.log
+);
+
+// _filter, _map에 _curryr이 적용된다면 다음과 같은 구현이 가능하다.
+var _filter = _curryr(_filter);
+var _map = _curryr(_map);
+
+_go(
+  users,
+  _filter(user => user.age >= 30),
+  _map(user => user.name),
+  console.log
+);
+
+_go(
+  users,
+  _filter(user => user.age < 30),
+  _map(user => user.age),
+  console.log
+);
+
+_go(
+  users,
+  _filter(user => user.age >= 30),
+  _map(_get('name')),
+  console.log
+);
+
+_go(
+  users,
+  _filter(user => user.age < 30),
+  _map(_get('age')),
+  console.log
+);
+
+
+// _each의 외부 다형성 높이기
+
+// list에 null 값이 들어오더라도 동작
+var getLength = _get('length');
+var _each = function (list, iter) {
+  for (let i = 0; i < getLength(list); i++) {
+    iter(list[i]);
+  }
+  return list;
+}
+
+// list에 array가 아닌 object가 들어오더라도 동작
+var _is_object = function (obj) {
+  return typeof obj == 'object' && !!obj;
+}
+var _keys = function (obj) {
+  return _is_object(obj) ? Object.keys(obj) : [];
+}
+
+var _each = function (list, iter) {
+  var keys = _keys(list);
+  for (let i = 0; i < keys.length; i++) {
+    iter(list[keys[i]]);
+  }
+  return list;
+}
+
+_each({ a: 'hi', b: 'hello', c: 'haha' }, value => console.log(value));
+
+// _each를 사용하는 다른 함수도 다형성이 높아짐
+console.log(
+  _map({ a: 'hi', b: 'hello', c: 'haha' }, value => value.toLowerCase())
+)
+
+_go(
+  { a: 'hi', b: 'hello', c: 'haha' },
+  _map(value => value.toLowerCase()),
+  console.log
+);
