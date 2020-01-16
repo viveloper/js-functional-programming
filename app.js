@@ -121,3 +121,143 @@ console.log(temp_users);
 // 4. 30세 미만인 유저의 나이를 수집한다.
 var names = _map(temp_users, user => user.age);
 console.log(names);
+
+
+// 커링, curry, curryr
+var _curry = function (fn) {
+  return function (a, b) {
+    return arguments.length === 2 ? fn(a, b) : function (b) { return fn(a, b) }
+  }
+}
+
+var _curryr = function (fn) {
+  return function (a, b) {
+    return arguments.length === 2 ? fn(a, b) : function (b) { return fn(b, a) }
+  }
+}
+
+var add = _curry((a, b) => a + b);
+
+var sub = _curry((a, b) => a - b);
+
+console.log(
+  add(10)(20)
+)
+console.log(
+  sub(10)(20)
+)
+console.log(
+  add(10, 20)
+)
+console.log(
+  sub(10, 20)
+)
+
+var add = _curryr((a, b) => a + b);
+
+var sub = _curryr((a, b) => a - b);
+
+console.log(
+  add(10)(20)
+)
+console.log(
+  sub(10)(20)
+)
+
+// _get 만들어 좀 더 간단하고 안전하게 하기
+var _get = function (obj, key) {
+  return obj ? obj[key] : undefined;
+}
+
+console.log(
+  _get(users[0], 'name')
+)
+
+// _get에 curryr 적용
+var _get = _curryr(function (obj, key) {
+  return obj ? obj[key] : undefined;
+})
+
+console.log(
+  _get(users[0], 'name')
+)
+console.log(
+  _get('name')(users[0])
+)
+
+var getName = _get('name');
+
+console.log(
+  getName(users[1])
+)
+
+// curryr을 적용함으로써 이런게 가능해짐
+var names = _map(users, user => user.name);
+console.log(names);
+
+var names = _map(users, _get('name'));
+console.log(names);
+
+var names = _map(users, user => user.age);
+console.log(names);
+
+var names = _map(users, _get('age'));
+console.log(names);
+
+
+// _reduce 만들기
+var _reduce = function (list, iter, memo) {
+  _each(list, item => {
+    memo = iter(memo, item);
+  });
+  return memo;
+}
+
+console.log(
+  _reduce([1, 2, 3], (memo, item) => {
+    return memo + item;
+  }, 0)
+)
+
+console.log(
+  _reduce(users, (memo, user) => {
+    memo.push(user.name);
+    return memo;
+  }, [])
+)
+
+console.log(
+  _reduce(users, (memo, user) => {
+    memo.names.push(user.name);
+    return memo;
+  }, { names: [] })
+)
+
+// _reduce에 memo 인자 생략 가능하도록 수정(list의 첫번째 값을 memo로 사용)
+var slice = Array.prototype.slice;
+var _rest = function (list, num) {
+  return slice.call(list, num);
+}
+
+var _reduce = function (list, iter, memo) {
+  if (!memo) {
+    memo = list[0];
+    list = _rest(list, 1);
+  }
+  _each(list, item => {
+    memo = iter(memo, item);
+  });
+  return memo;
+}
+
+console.log(
+  _reduce([1, 2, 3], (memo, val) => {
+    return memo + val;
+  })
+)
+
+console.log(
+  _reduce([1, 2, 3], (memo, val) => {
+    return memo + val;
+  }, 10)
+)
