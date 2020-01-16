@@ -81,13 +81,43 @@ console.log(names);
 
 // each 만들기
 // 1. _each로 _filter, _map 중복 코드 제거
-var _each = function(list, iter) {
-  for(let i=0; i<list.length; i++){
+var _each = function (list, iter) {
+  for (let i = 0; i < list.length; i++) {
     iter(list[i]);
   }
   return list;
 }
 
-_each(users, user => {
-  console.log(user);
-});
+var _filter = function (list, predi) {
+  var new_list = [];
+  _each(list, item => {
+    if (predi(item)) {
+      new_list.push(item);
+    }
+  });
+  return new_list;
+}
+
+var _map = function (list, mapper) {
+  var new_list = [];
+  _each(list, item => {
+    new_list.push(mapper(item));
+  });
+  return new_list;
+}
+
+// 1. 30세 이상인 유저를 거른다.
+var temp_users = _filter(users, user => user.age >= 30);
+console.log(temp_users);
+
+// 2. 30세 이상인 유저의 이름을 수집한다.
+var names = _map(temp_users, user => user.name);
+console.log(names);
+
+// 3. 30세 미만인 유저를 거른다.
+var temp_users = _filter(users, user => user.age < 30);
+console.log(temp_users);
+
+// 4. 30세 미만인 유저의 나이를 수집한다.
+var names = _map(temp_users, user => user.age);
+console.log(names);
